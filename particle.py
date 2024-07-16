@@ -23,7 +23,7 @@ class particle:
         self.pos = self.pos + vec3(vector.a, vector.b, vector.c)
 
     def updateVel(self, vector):
-        self.vel = self.vel + vec3(vector.a, vector.b, vector.c)
+        self.vel = vec3(vector.a, vector.b, vector.c) + self.vel
 
     def updateAcc(self, vector):
         self.acc = self.acc + vec3(vector.a, vector.b, vector.c)
@@ -49,18 +49,19 @@ class particle:
     
     def integrate(self, duration):
         #Remember that force should be added at the start (will persist during sim) or with addforce
+       # print(self.acc + "1")
         self.updateVel(self.acc*duration*0.5)
         self.updatePos(self.vel*duration)
-        self.acc += self.forceAccum*self.invMass
+        self.acc = self.acc + self.forceAccum*self.invMass 
         
     def addForce(self, force):
-        self.forceAccum += force
+        self.forceAccum = self.forceAccum + force
 
     def DoDrag(self, duration):
         self.vel *= self.damping**duration
 
     def clearAccumulator(self):
-        self.forceAccum = 0
+        self.forceAccum = vec3(0,0,0)
 
 
     def __repr__(self):
@@ -108,10 +109,20 @@ class ParticleForceRegistry(ParticleForceGenerator):
     def __repr__(self):
         return str(self.particleReg)
 
-class ParticleGravity:
+class ParticleGravity(ParticleForceGenerator):
     def __init__(self, _particle, gravity):
         self.particle = _particle
         self.gravity = gravity
 
-    def updateForce(self, duration):
-        self.particle.addForce(self.gravity*self.particle.getInvMass(self))
+    def updateForce(self, duration=0):
+        self.particle.addForce(vec3(0,self.gravity*self.particle.getInvMass(),0))
+        print(str(self.particle.acc), "2")
+
+
+#You can create any object with three lines of code:
+
+#bullet = particle(vec3(0,0,0), vec3(0,1,0), vec3(0,0,0), 1, 1, vec3(0,0,0)) ---- Only used once
+#ParticleGravity(bullet, 9).updateForce() --- Should be used in a loop
+#bullet.integrate(1) --- Should be used in a loop
+
+#TODO Add each force to the registry
